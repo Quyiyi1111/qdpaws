@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宠物健康百科 | 品种查询 · 症状自查 · 喂食计算</title>
+<meta name="description" content="宠物健康知识百科，包含狗狗猫咪品种大全、常见症状自查工具、科学喂食计算器。由动物医学专业团队维护。">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #333; background: #f8f9fa; line-height: 1.7;
+}
+
+/* Header */
+.site-header {
+  background: linear-gradient(135deg, #5b8c5a, #7cb342);
+  color: #fff; padding: 24px; text-align: center;
+}
+.site-header .logo-link { color: #fff; text-decoration: none; font-size: 14px; opacity: 0.8; }
+.site-header h1 { font-size: 28px; margin: 8px 0 4px; }
+.site-header p { font-size: 14px; opacity: 0.9; }
+
+/* Tab nav */
+.tab-nav {
+  display: flex; background: #fff; border-bottom: 2px solid #eee;
+  position: sticky; top: 0; z-index: 50; overflow-x: auto;
+}
+.tab-nav button {
+  flex: 1; min-width: 80px; padding: 14px 12px; border: none; background: none;
+  font-size: 14px; color: #888; cursor: pointer; transition: all .2s;
+  border-bottom: 2px solid transparent; margin-bottom: -2px;
+  white-space: nowrap; font-family: inherit;
+}
+.tab-nav button.active { color: #5b8c5a; border-bottom-color: #5b8c5a; font-weight: 600; }
+
+/* Content */
+.container { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Breed search */
+.search-box { display: flex; gap: 10px; margin-bottom: 20px; }
+.search-box input {
+  flex: 1; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 12px;
+  font-size: 15px; font-family: inherit; outline: none; transition: border-color .2s;
+}
+.search-box input:focus { border-color: #5b8c5a; }
+.search-box button {
+  padding: 12px 24px; background: #5b8c5a; color: #fff; border: none;
+  border-radius: 12px; font-size: 15px; cursor: pointer; font-family: inherit;
+}
+
+/* Breed grid */
+.breed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.breed-card {
+  background: #fff; border-radius: 12px; padding: 20px; cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04); transition: transform .2s, box-shadow .2s;
+  text-align: center;
+}
+.breed-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.breed-card .breed-emoji { font-size: 48px; margin-bottom: 8px; }
+.breed-card .breed-name { font-weight: 600; font-size: 16px; }
+.breed-card .breed-en { font-size: 12px; color: #aaa; }
+
+/* Breed detail modal */
+.modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center;
+  padding: 16px;
+}
+.modal-overlay.active { display: flex; }
+.modal-content {
+  background: #fff; border-radius: 16px; padding: 32px; max-width: 560px; width: 100%;
+  max-height: 80vh; overflow-y: auto; position: relative;
+}
+.modal-content h2 { font-size: 24px; margin-bottom: 16px; }
+.modal-content .close-btn {
+  position: absolute; top: 12px; right: 16px; background: none; border: none;
+  font-size: 24px; cursor: pointer; color: #aaa; padding: 4px 8px;
+}
+.modal-content .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+.modal-content .info-row .label { color: #888; }
+.modal-content .info-row .value { font-weight: 500; }
+
+/* Symptom checker */
+.symptom-intro { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center; }
+.symptom-intro .warning { color: #e67e22; font-size: 14px; margin-top: 8px; }
+
+.symptom-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 24px; }
+.symptom-chip {
+  background: #fff; border: 2px solid #e0e0e0; border-radius: 12px; padding: 12px;
+  text-align: center; cursor: pointer; transition: all .2s; font-size: 14px;
+  font-family: inherit; user-select: none;
+}
+.symptom-chip:hover { border-color: #7cb342; }
+.symptom-chip.selected { background: #e8f5e9; border-color: #5b8c5a; color: #2e7d32; font-weight: 600; }
+
+.result-box {
+  background: #fff; border-radius: 12px; padding: 24px; display: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.result-box.show { display: block; }
+.result-box h3 { font-size: 18px; margin-bottom: 16px; color: #2d2d2d; }
+.result-item {
+  padding: 16px; background: #fafafa; border-radius: 10px; margin-bottom: 12px;
+  border-left: 4px solid #5b8c5a;
+}
+.result-item .cause { font-weight: 600; margin-bottom: 4px; }
+.result-item .advice { font-size: 14px; color: #666; }
+.result-item .severity {
+  display: inline-block; padding: 2px 10px; border-radius: 12px;
+  font-size: 12px; font-weight: 600; margin-top: 6px;
+}
+.severity-low { background: #e8f5e9; color: #2e7d32; }
+.severity-mid { background: #fff3e0; color: #e65100; }
+.severity-high { background: #ffebee; color: #c62828; }
+
+/* Calculator */
+.calc-form { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+.calc-form .field { margin-bottom: 16px; }
+.calc-form label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+.calc-form select, .calc-form input {
+  width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 10px;
+  font-size: 15px; font-family: inherit; outline: none;
+}
+.calc-form select:focus, .calc-form input:focus { border-color: #5b8c5a; }
+.calc-btn {
+  width: 100%; padding: 14px; background: #5b8c5a; color: #fff; border: none;
+  border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;
+  font-family: inherit; transition: background .2s;
+}
+.calc-btn:hover { background: #4a7a49; }
+
+.calc-result {
+  background: #fff; border-radius: 12px; padding: 24px; display: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04); text-align: center;
+}
+.calc-result.show { display: block; }
+.calc-result .amount { font-size: 48px; font-weight: 800; color: #5b8c5a; }
+.calc-result .unit { font-size: 16px; color: #888; }
+.calc-result .breakdown { margin-top: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.calc-result .breakdown .item { background: #f8f9fa; border-radius: 10px; padding: 12px; }
+.calc-result .breakdown .item .val { font-size: 20px; font-weight: 700; color: #333; }
+.calc-result .breakdown .item .lbl { font-size: 12px; color: #999; }
+
+/* Blog section */
+.article-list { display: grid; gap: 12px; }
+.article-card {
+  background: #fff; border-radius: 12px; padding: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04); cursor: pointer;
+  transition: transform .2s;
+}
+.article-card:hover { transform: translateX(4px); }
+.article-card h3 { font-size: 16px; margin-bottom: 4px; color: #2d2d2d; }
+.article-card .meta { font-size: 12px; color: #aaa; }
+
+/* Footer */
+.site-footer { text-align: center; padding: 40px 24px; color: #bbb; font-size: 13px; border-top: 1px solid #eee; margin-top: 40px; }
+.site-footer a { color: #5b8c5a; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="index.html" class="logo-link">🐾 聪聪宠物</a>
+  <h1>宠物健康百科</h1>
+  <p>品种查询 · 症状自查 · 科学喂养</p>
+</header>
+
+<nav class="tab-nav">
+  <button class="active" onclick="switchTab('breeds')">🐕 品种百科</button>
+  <button onclick="switchTab('symptoms')">🏥 症状自查</button>
+  <button onclick="switchTab('feeding')">🍖 喂食计算</button>
+  <button onclick="switchTab('blog')">📝 养宠知识</button>
+</nav>
+
+<div class="container">
+<!-- ======================== BREEDS TAB ======================== -->
+<div class="tab-panel active" id="tab-breeds">
+  <div class="search-box">
+    <input type="text" id="breedSearch" placeholder="搜索品种，如：金毛、英短、柯基..." oninput="filterBreeds()">
+    <button onclick="filterBreeds()">搜索</button>
+  </div>
+  <div style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap;">
+    <button class="filter-chip active" onclick="setBreedFilter('all', this)" style="padding:6px 16px;border-radius:20px;border:1px solid #ddd;background:#fff;cursor:pointer;font-family:inherit;">全部</button>
+    <button class="filter-chip" onclick="setBreedFilter('dog', this)" style="padding:6px 16px;border-radius:20px;border:1px solid #ddd;background:#fff;cursor:pointer;font-family:inherit;">🐶 狗狗</button>
+    <button class="filter-chip" onclick="setBreedFilter('cat', this)" style="padding:6px 16px;border-radius:20px;border:1px solid #ddd;background:#fff;cursor:pointer;font-family:inherit;">🐱 猫咪</button>
+  </div>
+  <div class="breed-grid" id="breedGrid"></div>
+</div>
+
+<!-- ======================== SYMPTOMS TAB ======================== -->
+<div class="tab-panel" id="tab-symptoms">
+  <div class="symptom-intro">
+    <h3>选择你家宠物的症状</h3>
+    <p style="color:#888;font-size:14px;">多选症状以获得更准确的判断</p>
+    <p class="warning">⚠️ 本工具仅供参考，不能替代兽医诊断。紧急情况请立即就医。</p>
+  </div>
+  <div style="text-align:center;margin-bottom:16px;">
+    <button onclick="setSymptomType('dog')" id="symDogBtn" style="padding:8px 24px;border-radius:20px;border:2px solid #5b8c5a;background:#5b8c5a;color:#fff;cursor:pointer;font-family:inherit;margin:4px;">🐶 狗狗症状</button>
+    <button onclick="setSymptomType('cat')" id="symCatBtn" style="padding:8px 24px;border-radius:20px;border:2px solid #ddd;background:#fff;cursor:pointer;font-family:inherit;margin:4px;">🐱 猫咪症状</button>
+  </div>
+  <div class="symptom-grid" id="symptomGrid"></div>
+  <div class="result-box" id="symptomResult">
+    <h3>可能的原因</h3>
+    <div id="symptomResultContent"></div>
+    <p style="font-size:12px;color:#aaa;margin-top:12px;">⚠️ 以上仅为可能性参考，请咨询专业兽医确诊</p>
+  </div>
+</div>
+
+<!-- ======================== FEEDING TAB ======================== -->
+<div class="tab-panel" id="tab-feeding">
+  <div class="calc-form">
+    <div class="field">
+      <label>宠物种类</label>
+      <select id="petType" onchange="updateCalc()">
+        <option value="dog">🐶 狗狗</option>
+        <option value="cat">🐱 猫咪</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>品种</label>
+      <select id="petBreed" onchange="updateCalc()">
+        <option value="small">小型犬（如泰迪、比熊、吉娃娃）</option>
+        <option value="medium">中型犬（如柯基、柴犬、边牧）</option>
+        <option value="large">大型犬（如金毛、拉布拉多、哈士奇）</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>体重（公斤）</label>
+      <input type="number" id="petWeight" placeholder="请输入体重" min="0.5" max="100" step="0.1" value="5" oninput="updateCalc()">
+    </div>
+    <div class="field">
+      <label>年龄</label>
+      <select id="petAge" onchange="updateCalc()">
+        <option value="puppy">幼年（0-1岁）</option>
+        <option value="adult" selected>成年（1-7岁）</option>
+        <option value="senior">老年（7岁+）</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>活动量</label>
+      <select id="petActivity" onchange="updateCalc()">
+        <option value="low">较少（主要在室内）</option>
+        <option value="medium" selected>一般（每天遛1-2次）</option>
+        <option value="high">活跃（大量运动/工作犬）</option>
+      </select>
+    </div>
+    <button class="calc-btn" onclick="calculateFeeding()">计算每日喂食量</button>
+  </div>
+  <div class="calc-result" id="calcResult">
+    <h3>每日建议喂食量</h3>
+    <div class="amount" id="feedAmount">--</div>
+    <div class="unit">克/天</div>
+    <div class="breakdown">
+      <div class="item">
+        <div class="val" id="feedMeals">--</div>
+        <div class="lbl">建议分餐次数</div>
+      </div>
+      <div class="item">
+        <div class="val" id="feedPerMeal">--</div>
+        <div class="lbl">每餐克数</div>
+      </div>
+      <div class="item">
+        <div class="val" id="feedWater">--</div>
+        <div class="lbl">每日饮水(毫升)</div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:#aaa;margin-top:12px;">* 根据NRC标准估算，不同品牌狗粮猫粮热量不同，请参考包装说明微调</p>
+  </div>
+</div>
+
+<!-- ======================== BLOG TAB ======================== -->
+<div class="tab-panel" id="tab-blog">
+  <div class="article-list" id="articleList"></div>
+</div>
+</div>
+
+<footer class="site-footer">
+  <p>© 2025 <a href="index.html">聪聪宠物</a> · 青岛城阳 · 动物医学专业维护</p>
+  <p style="margin-top:4px;">内容仅供参考，不能替代兽医诊断</p>
+</footer>
+
+<!-- Breed detail modal -->
+<div class="modal-overlay" id="breedModal" onclick="closeModal(event)">
+  <div class="modal-content" id="breedModalContent"></div>
+</div>
+
+<script>
+// ======== DATA ========
+const breeds = [
+  // Dogs
+  {type:'dog',name:'金毛寻回犬',en:'Golden Retriever',emoji:'🦮',size:'大型犬',weight:'25-34kg',life:'10-12年',personality:'友善、聪明、温顺',care:'每天至少1小时运动，定期梳毛，易发髋关节问题',good:'非常适合家庭，对孩子友好'},
+  {type:'dog',name:'拉布拉多',en:'Labrador Retriever',emoji:'🐕‍🦺',size:'大型犬',weight:'25-36kg',life:'10-14年',personality:'活泼、忠诚、贪吃',care:'容易发胖需控制饮食，每天充足运动，注意髋肘关节',good:'导盲犬常见品种，极度亲人'},
+  {type:'dog',name:'柯基',en:'Pembroke Welsh Corgi',emoji:'🐕',size:'中型犬',weight:'10-14kg',life:'12-15年',personality:'聪明、活泼、固执',care:'注意腰椎保护（长身短腿），易发胖，需定期遛',good:'体型小但精力旺盛，适合公寓'},
+  {type:'dog',name:'柴犬',en:'Shiba Inu',emoji:'🐕',size:'中型犬',weight:'8-11kg',life:'12-16年',personality:'独立、警觉、忠诚',care:'换毛季掉毛严重，需要社会化训练，有主见',good:'干净、安静，像猫的狗'},
+  {type:'dog',name:'泰迪/贵宾',en:'Poodle/Toy Poodle',emoji:'🐩',size:'小型犬',weight:'2-8kg',life:'12-18年',personality:'聪明、活泼、粘人',care:'需定期美容剪毛，泪痕需护理，髌骨易脱位',good:'不掉毛，适合过敏人群'},
+  {type:'dog',name:'比熊',en:'Bichon Frisé',emoji:'🐩',size:'小型犬',weight:'3-5kg',life:'12-15年',personality:'欢快、温柔、黏人',care:'需勤梳毛防打结，泪痕护理，牙齿保健',good:'温顺可爱，适合新手'},
+  {type:'dog',name:'哈士奇',en:'Siberian Husky',emoji:'🐺',size:'大型犬',weight:'16-27kg',life:'12-14年',personality:'搞笑、精力旺盛、拆家',care:'每天大量运动，掉毛严重，易逃跑（撒手没）',good:'性格友善不咬人'},
+  {type:'dog',name:'边境牧羊犬',en:'Border Collie',emoji:'🐕',size:'中型犬',weight:'14-20kg',life:'12-15年',personality:'极聪明、工作狂、敏捷',care:'需要大量脑力+体力消耗，不适合懒人养',good:'犬类智商第一'},
+  {type:'dog',name:'萨摩耶',en:'Samoyed',emoji:'🐕',size:'大型犬',weight:'16-30kg',life:'12-14年',personality:'微笑天使、温顺、粘人',care:'掉毛严重，需经常梳毛，怕热',good:'笑容治愈，对孩子极好'},
+  {type:'dog',name:'法斗',en:'French Bulldog',emoji:'🐶',size:'小型犬',weight:'8-14kg',life:'10-12年',personality:'憨厚、安静、倔强',care:'短鼻犬怕热，脊柱问题，皮肤褶皱需清洁',good:'不需要大量运动，适合公寓'},
+  // Cats
+  {type:'cat',name:'英国短毛猫',en:'British Shorthair',emoji:'🐱',size:'中型',weight:'4-8kg',life:'12-20年',personality:'安静、独立、温柔',care:'易发胖需控制饮食，换毛季勤梳毛，注意多囊肾',good:'新手首选，性格稳定不闹'},
+  {type:'cat',name:'美国短毛猫',en:'American Shorthair',emoji:'🐱',size:'中型',weight:'4-7kg',life:'15-20年',personality:'活泼、聪明、适应力强',care:'体格强壮少生病，保持互动玩耍，注意口腔健康',good:'皮实好养，性价比高'},
+  {type:'cat',name:'布偶猫',en:'Ragdoll',emoji:'🐱',size:'大型',weight:'4-9kg',life:'12-17年',personality:'温柔粘人、像布娃娃',care:'长毛需每天梳，肠胃较敏感，注意肥厚性心肌病',good:'仙女猫，颜值天花板'},
+  {type:'cat',name:'暹罗猫',en:'Siamese',emoji:'🐱',size:'中型',weight:'3-5kg',life:'15-20年',personality:'话痨、粘人、聪明',care:'需要大量陪伴互动，怕冷（毛色会变深）',good:'像狗一样忠诚的猫'},
+  {type:'cat',name:'橘猫',en:'Orange Tabby',emoji:'🐱',size:'中大型',weight:'4-10kg',life:'12-18年',personality:'贪吃、亲人、佛系',care:'极易发胖必须控制食量，中华田园猫体质好',good:'大橘为重，性格开朗'},
+  {type:'cat',name:'三花猫',en:'Calico',emoji:'🐱',size:'中型',weight:'3-5kg',life:'12-18年',personality:'独立、机警、有个性',care:'中华田园猫，好养活少生病，定期驱虫疫苗即可',good:'大多为母猫，看家小能手'},
+  {type:'cat',name:'缅因猫',en:'Maine Coon',emoji:'🐱',size:'大型',weight:'5-11kg',life:'10-15年',personality:'温柔巨人、聪明友好',care:'长毛需频繁梳理，注意肥厚性心肌病和髋关节',good:'体型巨大但性格温柔'},
+  {type:'cat',name:'银渐层',en:'Silver Shaded',emoji:'🐱',size:'中型',weight:'3-6kg',life:'12-17年',personality:'优雅、安静、略胆小',care:'绿眼睛高颜值，毛色浅需注意泪痕，易有呼吸道问题',good:'颜值高性格好不拆家'},
+];
+
+const symptomData = {
+  dog: [
+    {id:'vomit',label:'呕吐',emoji:'🤮'},
+    {id:'diarrhea',label:'腹泻/拉稀',emoji:'💩'},
+    {id:'not_eat',label:'食欲不振',emoji:'🍽️'},
+    {id:'lethargy',label:'精神萎靡',emoji:'😴'},
+    {id:'itch',label:'频繁抓挠',emoji:'🦟'},
+    {id:'cough',label:'咳嗽',emoji:'🫁'},
+    {id:'limping',label:'跛行/腿瘸',emoji:'🦵'},
+    {id:'eye_discharge',label:'眼屎增多',emoji:'👁️'},
+    {id:'ear_odor',label:'耳朵异味',emoji:'👂'},
+    {id:'drink_more',label:'多饮多尿',emoji:'🚰'},
+    {id:'hair_loss',label:'脱毛/斑秃',emoji:'🧶'},
+    {id:'swollen',label:'腹部胀大',emoji:'🎈'},
+  ],
+  cat: [
+    {id:'vomit_c',label:'呕吐（毛球/食物）',emoji:'🤮'},
+    {id:'diarrhea_c',label:'软便/拉稀',emoji:'💩'},
+    {id:'not_eat_c',label:'不吃不喝',emoji:'🍽️'},
+    {id:'hide',label:'躲起来不见人',emoji:'🙈'},
+    {id:'sneeze',label:'打喷嚏/流鼻涕',emoji:'🤧'},
+    {id:'urine_issue',label:'乱尿/尿血/尿闭',emoji:'🚽'},
+    {id:'eye_c',label:'流眼泪/眼红肿',emoji:'👁️'},
+    {id:'ear_c',label:'耳螨/耳朵黑',emoji:'👂'},
+    {id:'drool',label:'流口水/口臭',emoji:'💧'},
+    {id:'weight_loss',label:'消瘦/体重下降',emoji:'⚖️'},
+    {id:'groom_less',label:'不舔毛/毛发脏乱',emoji:'🧶'},
+    {id:'vomit_after_eat',label:'吃完就吐',emoji:'🍽️'},
+  ],
+};
+
+const symptomResults = {
+  vomit:[{cause:'吃太快或吃太多',advice:'尝试慢食碗，少量多餐',severity:'low'},{cause:'食物过敏或不耐受',advice:'排查近期更换的粮或零食',severity:'mid'},{cause:'肠胃炎',advice:'禁食6-12小时观察，给益生菌，不缓解就医',severity:'mid'},{cause:'异物梗阻',advice:'如伴随干呕、腹痛，立即就医！',severity:'high'}],
+  diarrhea:[{cause:'换粮过快',advice:'换粮需7天过渡，喂益生菌调理',severity:'low'},{cause:'肠道寄生虫',advice:'做便检，按兽医指导驱虫',severity:'mid'},{cause:'肠胃炎/病毒感染',advice:'禁食半天，喂益生菌+蒙脱石散，不缓解立即就医',severity:'mid'},{cause:'细小病毒（幼犬）',advice:'幼犬腹泻+呕吐+便血=立即就医，细小致死率高！',severity:'high'}],
+  not_eat:[{cause:'挑食',advice:'定时定量不给零食，饿一两顿观察',severity:'low'},{cause:'天气太热',advice:'开空调降温，保证充足饮水',severity:'low'},{cause:'牙齿/口腔疼痛',advice:'检查口腔有无红肿溃疡，就医检查',severity:'mid'},{cause:'内脏疾病（肝肾/胰腺）',advice:'持续超过24小时不吃+精神差，立即就医检查',severity:'high'}],
+  lethargy:[{cause:'累了/天气热',advice:'观察半天，如恢复则无碍',severity:'low'},{cause:'发烧/感染',advice:'测体温（肛温），>39.2°C立即就医',severity:'mid'},{cause:'贫血或内脏问题',advice:'牙龈发白+精神萎靡=立即就医',severity:'high'}],
+  itch:[{cause:'跳蚤/蜱虫',advice:'做体外驱虫，环境消毒',severity:'low'},{cause:'皮肤过敏/湿疹',advice:'排查过敏源（食物/环境），药浴辅助',severity:'mid'},{cause:'真菌感染（癣）',advice:'患处脱毛结痂，需就医用药，可传染人',severity:'mid'}],
+  cough:[{cause:'喝水呛到/项圈太紧',advice:'松项圈，观察即可',severity:'low'},{cause:'犬窝咳/上呼吸道感染',advice:'休息保暖，就医开药',severity:'mid'},{cause:'心脏病引起',advice:'老年犬+夜间咳嗽加重=立即就医做心超',severity:'high'}],
+  limping:[{cause:'轻微扭伤',advice:'限制活动1-2天观察',severity:'low'},{cause:'髌骨脱位（小型犬常见）',advice:'常见于泰迪比熊，需就医评级决定是否手术',severity:'mid'},{cause:'骨折或韧带撕裂',advice:'完全不着地+剧烈疼痛=立即就医拍片',severity:'high'}],
+  eye_discharge:[{cause:'上火/饮食太咸',advice:'清淡饮食，多喝水',severity:'low'},{cause:'结膜炎',advice:'宠物专用眼药水，戴伊丽莎白圈防抓',severity:'mid'},{cause:'眼睑内翻/角膜损伤',advice:'长期流泪+眯眼=就医手术矫正',severity:'high'}],
+  ear_odor:[{cause:'太久没清理',advice:'宠物专用洗耳液清洗',severity:'low'},{cause:'耳螨',advice:'耳内有黑褐色分泌物，就医开药+定期驱虫',severity:'mid'},{cause:'外耳炎/中耳炎',advice:'红肿+脓性分泌物=立即就医',severity:'high'}],
+  drink_more:[{cause:'天热/运动量大',advice:'正常现象，保证饮水充足',severity:'low'},{cause:'糖尿病',advice:'多饮多尿多食但消瘦=就医测血糖',severity:'mid'},{cause:'肾脏疾病',advice:'老年犬猫常见，需做生化检查',severity:'high'}],
+  hair_loss:[{cause:'换毛季正常掉毛',advice:'勤梳毛，补充鱼油',severity:'low'},{cause:'皮肤病（真菌/螨虫）',advice:'斑秃+红疹=就医刮片检查',severity:'mid'},{cause:'内分泌疾病',advice:'对称性脱毛+皮肤变薄=就医查甲状腺/肾上腺',severity:'mid'}],
+  swollen:[{cause:'吃撑了/胀气',advice:'少食多餐，益生菌辅助',severity:'low'},{cause:'腹水',advice:'腹部下垂+呼吸困难=立即就医',severity:'high'},{cause:'胃扭转（大型犬）',advice:'干呕+腹部急剧胀大=几分钟内可能致命，立即急诊！',severity:'high'}],
+  // Cat specific
+  vomit_c:[{cause:'吐毛球（正常）',advice:'定期喂化毛膏/猫草，梳毛减少舔入',severity:'low'},{cause:'吃太快',advice:'慢食碗或少量多餐',severity:'low'},{cause:'肠胃炎',advice:'禁食半天，喂益生菌，不缓解就医',severity:'mid'}],
+  diarrhea_c:[{cause:'换粮/零食不耐受',advice:'停新食物，喂益生菌',severity:'low'},{cause:'寄生虫（球虫/滴虫）',advice:'便检，按兽医指导用药',severity:'mid'},{cause:'猫瘟（幼猫）',advice:'幼猫腹泻+呕吐+发烧=立即就医',severity:'high'}],
+  not_eat_c:[{cause:'挑食/天气热',advice:'换适口性好罐头，保证饮水',severity:'low'},{cause:'应激/环境变化',advice:'给安静空间，费洛蒙扩散器辅助',severity:'low'},{cause:'脂肪肝（饿出来的）',advice:'猫超过48小时不吃=有脂肪肝风险，立即就医！',severity:'high'}],
+  hide:[{cause:'正常休息/天气变化',advice:'猫正常行为，无需干预',severity:'low'},{cause:'应激/害怕',advice:'给安静空间，减少打扰',severity:'low'},{cause:'生病疼痛',advice:'突然开始躲藏+食欲下降=就医检查',severity:'mid'}],
+  sneeze:[{cause:'灰尘/气味刺激',advice:'打扫卫生，避免香水刺激',severity:'low'},{cause:'猫鼻支（疱疹病毒）',advice:'打喷嚏+眼鼻分泌物=就医抗病毒治疗',severity:'mid'},{cause:'杯状病毒/支原体',advice:'持续喷嚏+口炎=就医检测',severity:'mid'}],
+  urine_issue:[{cause:'发情/标记领地',advice:'绝育可解决，清洁彻底去味',severity:'low'},{cause:'膀胱炎/尿路感染',advice:'尿频+血尿=就医消炎',severity:'mid'},{cause:'尿闭（公猫致命急症！）',advice:'尿不出+嚎叫+呕吐=黄金24小时内急诊导尿！超过48h可致死',severity:'high'}],
+  eye_c:[{cause:'普通眼屎/灰尘',advice:'宠物湿巾擦拭',severity:'low'},{cause:'猫鼻支导致',advice:'伴随喷嚏流涕，就医抗病毒',severity:'mid'},{cause:'角膜溃疡',advice:'眯眼+流泪+角膜发白=立即就医',severity:'high'}],
+  ear_c:[{cause:'耳螨',advice:'黑褐色分泌物，宠物店或就医清理+定期驱虫',severity:'low'},{cause:'马拉色菌感染',advice:'深褐色油腻分泌物，就医用药',severity:'mid'}],
+  drool:[{cause:'闻到食物/放松',advice:'正常现象，无需担心',severity:'low'},{cause:'口炎/牙龈炎',advice:'口腔红肿+口臭+流口水=就医检查，可能需要拔牙',severity:'mid'},{cause:'中毒/癫痫',advice:'突然大量流口水+抽搐/精神异常=立即急诊',severity:'high'}],
+  weight_loss:[{cause:'换粮/运动增多',advice:'观察2周，恢复正常饮食量',severity:'low'},{cause:'甲亢（老年猫常见）',advice:'吃得多但消瘦+亢奋=就医测T4',severity:'mid'},{cause:'慢性肾病/肿瘤',advice:'持续消瘦+精神差=立即就医全面检查',severity:'high'}],
+  groom_less:[{cause:'换季/心情不好',advice:'多陪伴互动，观察几天',severity:'low'},{cause:'口腔/牙齿疼痛',advice:'张嘴检查有无红肿溃疡',severity:'mid'},{cause:'关节炎/身体疼痛',advice:'老年猫+不爱动+不舔毛=就医检查关节',severity:'mid'}],
+  vomit_after_eat:[{cause:'吃太快',advice:'用慢食碗/舔食垫',severity:'low'},{cause:'食物过敏',advice:'换低敏粮或单一蛋白来源试吃',severity:'mid'},{cause:'食道问题/巨食道症',advice:'每次吃完都吐+瘦=就医检查食道',severity:'high'}],
+};
+
+const articles = [
+  {title:'养猫新手必读：接猫前要准备的10样东西',date:'2025-06-15',summary:'猫砂盆、猫粮、抓板...接猫回家之前的必备清单，让猫咪快速适应新家。'},
+  {title:'狗狗换毛季怎么办？掉毛星人的自救指南',date:'2025-06-10',summary:'春秋两季狗毛满天飞？教你梳毛技巧、饮食调理和环境清洁全攻略。'},
+  {title:'猫咪呕吐怎么办？一篇文章教你判断要不要去医院',date:'2025-05-28',summary:'吐毛球还是生病？看呕吐物颜色和猫咪状态，快速判断危险等级。'},
+  {title:'夏天遛狗注意事项：高温天如何保护狗狗',date:'2025-05-20',summary:'地表温度60°C时遛狗=烫伤肉垫！夏季遛狗的时间选择和防暑技巧。'},
+  {title:'公猫尿闭：一个晚上就能要命的急症',date:'2025-05-12',summary:'公猫尿闭的早期信号、急救措施和预防方法，每个养猫人都应该知道。'},
+  {title:'科学喂养：狗狗每天到底该吃多少？',date:'2025-04-25',summary:'不同年龄、体型、活动量的狗，每天热量需求差很多。别再按碗来喂了！'},
+];
+
+// ======== GLOBAL STATE ========
+let breedFilter = 'all';
+let symptomType = 'dog';
+let selectedSymptoms = [];
+
+// ======== BREEDS ========
+function renderBreeds(filter='all', search='') {
+  const grid = document.getElementById('breedGrid');
+  let filtered = breeds;
+  if (filter !== 'all') filtered = filtered.filter(b => b.type === filter);
+  if (search) {
+    const q = search.toLowerCase();
+    filtered = filtered.filter(b => b.name.includes(q) || b.en.toLowerCase().includes(q) || b.personality.includes(q));
+  }
+  grid.innerHTML = filtered.map((b,i) => `
+    <div class="breed-card" onclick="openBreed('${b.name}')">
+      <div class="breed-emoji">${b.emoji}</div>
+      <div class="breed-name">${b.name}</div>
+      <div class="breed-en">${b.en}</div>
+    </div>
+  `).join('');
+}
+
+function openBreed(name) {
+  const b = breeds.find(b => b.name === name);
+  if (!b) return;
+  document.getElementById('breedModalContent').innerHTML = `
+    <button class="close-btn" onclick="document.getElementById('breedModal').classList.remove('active')">×</button>
+    <div style="text-align:center;font-size:64px;">${b.emoji}</div>
+    <h2>${b.name} <small style="color:#aaa;font-size:14px;">${b.en}</small></h2>
+    <div class="info-row"><span class="label">体型</span><span class="value">${b.size}</span></div>
+    <div class="info-row"><span class="label">体重范围</span><span class="value">${b.weight}</span></div>
+    <div class="info-row"><span class="label">平均寿命</span><span class="value">${b.life}</span></div>
+    <div class="info-row"><span class="label">性格特点</span><span class="value">${b.personality}</span></div>
+    <div class="info-row"><span class="label">护理要点</span><span class="value">${b.care}</span></div>
+    <div class="info-row"><span class="label">推荐理由</span><span class="value">${b.good}</span></div>
+  `;
+  document.getElementById('breedModal').classList.add('active');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('breedModal')) {
+    document.getElementById('breedModal').classList.remove('active');
+  }
+}
+
+function filterBreeds() {
+  const search = document.getElementById('breedSearch').value;
+  renderBreeds(breedFilter, search);
+}
+
+function setBreedFilter(f, btn) {
+  breedFilter = f;
+  document.querySelectorAll('.filter-chip').forEach(c => c.style.background='#fff;color:#333;');
+  btn.style.background = '#5b8c5a'; btn.style.color = '#fff';
+  filterBreeds();
+}
+
+// ======== SYMPTOMS ========
+function renderSymptoms() {
+  const grid = document.getElementById('symptomGrid');
+  const syms = symptomData[symptomType];
+  grid.innerHTML = syms.map(s => {
+    const sel = selectedSymptoms.includes(s.id);
+    return `<button class="symptom-chip${sel?' selected':''}" onclick="toggleSymptom('${s.id}')">${s.emoji} ${s.label}</button>`;
+  }).join('');
+  updateSymptomResult();
+}
+
+function setSymptomType(type) {
+  symptomType = type;
+  selectedSymptoms = [];
+  document.getElementById('symDogBtn').style.background = type==='dog'?'#5b8c5a':'#fff';
+  document.getElementById('symDogBtn').style.color = type==='dog'?'#fff':'#333';
+  document.getElementById('symDogBtn').style.borderColor = type==='dog'?'#5b8c5a':'#ddd';
+  document.getElementById('symCatBtn').style.background = type==='cat'?'#5b8c5a':'#fff';
+  document.getElementById('symCatBtn').style.color = type==='cat'?'#fff':'#333';
+  document.getElementById('symCatBtn').style.borderColor = type==='cat'?'#5b8c5a':'#ddd';
+  renderSymptoms();
+}
+
+function toggleSymptom(id) {
+  const idx = selectedSymptoms.indexOf(id);
+  if (idx >= 0) selectedSymptoms.splice(idx, 1);
+  else selectedSymptoms.push(id);
+  renderSymptoms();
+}
+
+function updateSymptomResult() {
+  const box = document.getElementById('symptomResult');
+  const content = document.getElementById('symptomResultContent');
+  if (selectedSymptoms.length === 0) { box.classList.remove('show'); return; }
+
+  // Collect all results
+  let allResults = [];
+  selectedSymptoms.forEach(sid => {
+    const r = symptomResults[sid] || [];
+    allResults = allResults.concat(r);
+  });
+
+  // Deduplicate by cause
+  const seen = new Set();
+  allResults = allResults.filter(r => {
+    if (seen.has(r.cause)) return false;
+    seen.add(r.cause);
+    return true;
+  });
+
+  // Sort by severity: high > mid > low
+  const order = {high:0, mid:1, low:2};
+  allResults.sort((a,b) => (order[a.severity]||9) - (order[b.severity]||9));
+
+  content.innerHTML = allResults.map(r => `
+    <div class="result-item">
+      <div class="cause">${r.cause}</div>
+      <div class="advice">${r.advice}</div>
+      <span class="severity severity-${r.severity}">${{low:'🟢 低风险',mid:'🟡 需关注',high:'🔴 建议就医'}[r.severity]}</span>
+    </div>
+  `).join('');
+  box.classList.add('show');
+}
+
+// ======== FEEDING ========
+function updateCalc() {
+  const type = document.getElementById('petType').value;
+  const breed = document.getElementById('petBreed');
+  if (type === 'dog') {
+    breed.innerHTML = `
+      <option value="small">小型犬（如泰迪、比熊、吉娃娃）</option>
+      <option value="medium">中型犬（如柯基、柴犬、边牧）</option>
+      <option value="large">大型犬（如金毛、拉布拉多、哈士奇）</option>
+    `;
+  } else {
+    breed.innerHTML = `
+      <option value="small">小型猫（如暹罗、三花）</option>
+      <option value="medium">中型猫（如英短、美短、橘猫）</option>
+      <option value="large">大型猫（如布偶、缅因）</option>
+    `;
+  }
+}
+
+function calculateFeeding() {
+  const type = document.getElementById('petType').value;
+  const weight = parseFloat(document.getElementById('petWeight').value) || 5;
+  const age = document.getElementById('petAge').value;
+  const activity = document.getElementById('petActivity').value;
+
+  // RER (Resting Energy Requirement) = 70 * weight^0.75
+  const rer = 70 * Math.pow(weight, 0.75);
+
+  // DER multipliers
+  let derMultiplier = 1.6; // default adult medium activity
+  if (age === 'puppy') derMultiplier = 2.5;
+  else if (age === 'senior') derMultiplier = 1.4;
+  else if (activity === 'low') derMultiplier = 1.2;
+  else if (activity === 'high') derMultiplier = 2.0;
+
+  if (type === 'cat') {
+    if (age === 'puppy') derMultiplier = 2.5;
+    else if (age === 'senior') derMultiplier = 1.2;
+    else if (activity === 'low') derMultiplier = 1.0;
+    else if (activity === 'high') derMultiplier = 1.4;
+    else derMultiplier = 1.2;
+  }
+
+  const der = rer * derMultiplier;
+  // Average dry food: ~3.5 kcal/g (dog), ~3.8 kcal/g (cat)
+  const kcalPerGram = type === 'cat' ? 3.8 : 3.5;
+  const gramsPerDay = Math.round(der / kcalPerGram);
+
+  let meals = 2;
+  if (age === 'puppy') meals = type === 'cat' ? 4 : 3;
+  else if (age === 'senior') meals = 2;
+
+  const perMeal = Math.round(gramsPerDay / meals);
+  const water = Math.round(weight * 50); // ~50ml per kg
+
+  document.getElementById('feedAmount').textContent = gramsPerDay;
+  document.getElementById('feedMeals').textContent = meals + ' 餐';
+  document.getElementById('feedPerMeal').textContent = perMeal + ' g';
+  document.getElementById('feedWater').textContent = water + ' ml';
+  document.getElementById('calcResult').classList.add('show');
+
+  // Scroll to result
+  document.getElementById('calcResult').scrollIntoView({behavior:'smooth'});
+}
+
+// ======== BLOG ========
+function renderBlog() {
+  document.getElementById('articleList').innerHTML = articles.map(a => `
+    <div class="article-card">
+      <h3>${a.title}</h3>
+      <p style="font-size:14px;color:#888;margin:4px 0;">${a.summary}</p>
+      <div class="meta">${a.date}</div>
+    </div>
+  `).join('');
+}
+
+// ======== TAB SWITCHING ========
+function switchTab(name) {
+  document.querySelectorAll('.tab-nav button').forEach((b,i) => {
+    b.classList.remove('active');
+  });
+  const tabs = ['breeds','symptoms','feeding','blog'];
+  const idx = tabs.indexOf(name);
+  document.querySelectorAll('.tab-nav button')[idx].classList.add('active');
+
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+
+  if (name === 'blog') renderBlog();
+}
+
+// ======== INIT ========
+renderBreeds();
+renderSymptoms();
+updateCalc();
+document.getElementById('petType').addEventListener('change', updateCalc);
+</script>
+
+</body>
+</html>

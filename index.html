@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>聪聪宠物 | 青岛城阳上门喂猫遛狗 · 宠物摄影</title>
+<meta name="description" content="青岛城阳上门喂猫、遛狗、宠物摄影服务。动物医学专业毕业，懂猫懂狗，让您放心出行。">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #333; background: #fdfaf5; line-height: 1.7;
+}
+
+/* Nav */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
+  border-bottom: 1px solid #eee; padding: 0 24px;
+  display: flex; align-items: center; justify-content: space-between; height: 56px;
+}
+nav .logo { font-size: 20px; font-weight: 700; color: #d4842a; }
+nav .links { display: flex; gap: 24px; list-style: none; }
+nav .links a { text-decoration: none; color: #666; font-size: 14px; transition: color .2s; }
+nav .links a:hover { color: #d4842a; }
+@media (max-width: 600px) { nav .links { gap: 12px; } nav .links a { font-size: 12px; } }
+
+/* Sections */
+section { padding: 80px 24px; max-width: 960px; margin: 0 auto; }
+section.hero { padding-top: 120px; }
+
+/* Hero */
+.hero { text-align: center; }
+.hero h1 { font-size: 36px; font-weight: 800; color: #2d2d2d; margin-bottom: 16px; }
+.hero h1 span { color: #d4842a; }
+.hero .subtitle { font-size: 18px; color: #888; margin-bottom: 32px; }
+.hero .badges { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px; }
+.hero .badge {
+  background: #fff; border: 1px solid #e8d5c4; border-radius: 24px;
+  padding: 8px 20px; font-size: 14px; color: #8b6f4e;
+  display: flex; align-items: center; gap: 6px;
+}
+.hero .badge .icon { font-size: 18px; }
+.hero .cta-btn {
+  display: inline-block; background: #d4842a; color: #fff; text-decoration: none;
+  padding: 14px 40px; border-radius: 32px; font-size: 16px; font-weight: 600;
+  transition: background .2s, transform .2s;
+}
+.hero .cta-btn:hover { background: #b86e1e; transform: translateY(-2px); }
+
+/* Section titles */
+.section-title { text-align: center; margin-bottom: 48px; }
+.section-title h2 { font-size: 28px; font-weight: 700; color: #2d2d2d; margin-bottom: 8px; }
+.section-title p { color: #999; font-size: 15px; }
+
+/* Services */
+.services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+.service-card {
+  background: #fff; border-radius: 16px; padding: 32px 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04); text-align: center;
+  transition: transform .2s, box-shadow .2s;
+}
+.service-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+.service-card .emoji { font-size: 40px; margin-bottom: 12px; }
+.service-card h3 { font-size: 18px; margin-bottom: 8px; color: #2d2d2d; }
+.service-card .price { font-size: 28px; font-weight: 800; color: #d4842a; margin-bottom: 4px; }
+.service-card .unit { font-size: 13px; color: #aaa; margin-bottom: 12px; }
+.service-card .details { font-size: 13px; color: #888; line-height: 1.8; }
+
+/* Gallery */
+.gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.gallery img {
+  width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px;
+  cursor: pointer; transition: transform .2s;
+}
+.gallery img:hover { transform: scale(1.03); }
+@media (max-width: 600px) { .gallery { grid-template-columns: repeat(2, 1fr); } }
+
+/* Lightbox */
+.lightbox {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.9); z-index: 200; justify-content: center; align-items: center;
+  cursor: pointer;
+}
+.lightbox.active { display: flex; }
+.lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
+
+/* About */
+.about-content {
+  display: flex; gap: 40px; align-items: center;
+}
+.about-content .text { flex: 1; }
+.about-content .text h3 { font-size: 22px; margin-bottom: 16px; color: #2d2d2d; }
+.about-content .text p { color: #666; margin-bottom: 12px; font-size: 15px; }
+.about-content .text .highlight { color: #d4842a; font-weight: 600; }
+.about-content .avatar-box {
+  flex-shrink: 0; width: 160px; height: 160px;
+  background: linear-gradient(135deg, #fce4c4, #f8d5a3);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 64px;
+}
+@media (max-width: 600px) {
+  .about-content { flex-direction: column-reverse; text-align: center; }
+}
+
+/* Contact */
+.contact-box {
+  background: #fff; border-radius: 16px; padding: 40px; text-align: center;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04); max-width: 480px; margin: 0 auto;
+}
+.contact-box h3 { font-size: 20px; margin-bottom: 20px; color: #2d2d2d; }
+.contact-box .qrcode {
+  width: 200px; height: 200px; background: #f5f5f5; border-radius: 12px;
+  margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;
+  color: #ccc; font-size: 14px;
+}
+.contact-box .wechat { font-size: 16px; color: #d4842a; font-weight: 600; }
+.contact-box .hint { font-size: 13px; color: #aaa; margin-top: 8px; }
+
+/* Area */
+.area-tags { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+.area-tag {
+  background: #fff8ef; border: 1px solid #f0d8b0; border-radius: 20px;
+  padding: 6px 16px; font-size: 13px; color: #8b6f4e;
+}
+
+/* Footer */
+footer { text-align: center; padding: 40px 24px; color: #bbb; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="logo">🐾 聪聪宠物</div>
+  <ul class="links">
+    <li><a href="#services">服务</a></li>
+    <li><a href="#gallery">作品</a></li>
+    <li><a href="#about">关于</a></li>
+    <li><a href="#contact">联系</a></li>
+  </ul>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <h1>青岛城阳 · <span>放心托付</span></h1>
+  <p class="subtitle">出差？加班？旅游？你的毛孩子交给我</p>
+  <div class="badges">
+    <div class="badge"><span class="icon">🎓</span> 动物医学专业毕业</div>
+    <div class="badge"><span class="icon">🐱</span> 懂猫懂狗懂急救</div>
+    <div class="badge"><span class="icon">📍</span> 城阳区上门服务</div>
+    <div class="badge"><span class="icon">📸</span> 附赠喂猫照片</div>
+  </div>
+  <a href="#contact" class="cta-btn">立即预约 →</a>
+  <div class="area-tags">
+    <span class="area-tag">城阳街道</span>
+    <span class="area-tag">流亭街道</span>
+    <span class="area-tag">夏庄街道</span>
+    <span class="area-tag">惜福镇</span>
+    <span class="area-tag">棘洪滩</span>
+  </div>
+</section>
+
+<!-- Services -->
+<section id="services">
+  <div class="section-title">
+    <h2>服务与价格</h2>
+    <p>透明定价，无隐形收费</p>
+  </div>
+  <div class="services-grid">
+    <div class="service-card">
+      <div class="emoji">🐱</div>
+      <h3>上门喂猫</h3>
+      <div class="price">¥35<span class="unit">/次</span></div>
+      <div class="unit">5公里内 · 约30分钟</div>
+      <div class="details">
+        添粮换水 · 铲屎清洁<br>
+        状态观察 · 陪玩互动<br>
+        全程视频反馈<br>
+        多一只猫 +5元<br>
+        5-8公里 ¥45/次
+      </div>
+    </div>
+    <div class="service-card">
+      <div class="emoji">🐶</div>
+      <h3>上门遛狗</h3>
+      <div class="price">¥30<span class="unit">/次起</span></div>
+      <div class="unit">5公里内 · 30分钟</div>
+      <div class="details">
+        小型犬(＜10斤) ¥30<br>
+        中型犬(10-30斤) ¥40<br>
+        大型犬(＞30斤) ¥50<br>
+        清理排泄物 · 视频反馈<br>
+        多一只狗 +10元
+      </div>
+    </div>
+    <div class="service-card">
+      <div class="emoji">📸</div>
+      <h3>宠物写真</h3>
+      <div class="price">¥99<span class="unit">/次</span></div>
+      <div class="unit">户外拍摄 · 约1小时</div>
+      <div class="details">
+        城阳区户外公园拍摄<br>
+        底片全返 · 精修5张<br>
+        自然光纪实风格<br>
+        捕捉毛孩子最真实一面<br>
+        加精修 15元/张
+      </div>
+    </div>
+    <div class="service-card">
+      <div class="emoji">🏥</div>
+      <h3>宠物陪诊</h3>
+      <div class="price">¥58<span class="unit">/次</span></div>
+      <div class="unit">接送+陪同就诊</div>
+      <div class="details">
+        送宠物打疫苗/体检<br>
+        陪同去宠物医院就诊<br>
+        动医背景更懂医嘱<br>
+        帮你记下医生说的要点
+      </div>
+    </div>
+  </div>
+  <div style="text-align:center; margin-top:16px; font-size:13px; color:#aaa;">
+    ⚠️ 节假日加收10元 · 提前1天预约 · 不接病期/孕期/攻击性宠物
+  </div>
+</section>
+
+<!-- Gallery -->
+<section id="gallery">
+  <div class="section-title">
+    <h2>日常随拍</h2>
+    <p>手机实拍，真实日常</p>
+  </div>
+  <div class="gallery" id="galleryGrid"></div>
+</section>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="this.classList.remove('active')">
+  <img id="lightboxImg" src="" alt="预览">
+</div>
+
+<!-- About -->
+<section id="about">
+  <div class="section-title"><h2>关于我</h2></div>
+  <div class="about-content">
+    <div class="text">
+      <h3>你好，我是聪聪的主人 👋</h3>
+      <p>
+        我毕业于<span class="highlight">动物医学专业</span>，家里有一只叫聪聪的狗狗。
+        因为喜欢动物才选了这个专业——比起实验室和手术台，我更享受和毛孩子们在一起的日常。
+      </p>
+      <p>
+        很多宠物家长出差或旅游时最头疼的就是<span class="highlight">"谁来照顾它"</span>。
+        寄养在宠物店？贵，而且猫容易应激。找邻居？不好意思总麻烦人家。
+      </p>
+      <p>
+        所以我开始做这件事——<span class="highlight">用专业背景+真实爱心</span>，让家长放心出行，
+        让毛孩子在家安心等你回来。
+      </p>
+    </div>
+    <div class="avatar-box">🐕</div>
+  </div>
+</section>
+
+<!-- Contact -->
+<section id="contact">
+  <div class="section-title"><h2>预约联系</h2></div>
+  <div class="contact-box">
+    <h3>扫码加微信预约</h3>
+    <div class="qrcode">微信二维码<br>（添加后发送）</div>
+    <p class="wechat">微信号：congcong_pet</p>
+    <p class="hint">添加时备注"宠物服务"<br>提前1天预约，当天可约需加急费5元</p>
+  </div>
+</section>
+
+<footer>
+  © 2025 聪聪宠物 · 青岛城阳 · 动物医学专业毕业
+</footer>
+
+<script>
+// Gallery
+const photoDir = 'photos/';
+const photos = [
+  '1fcf68921884642158ef7179300e9514.jpg',
+  '35017fe6e70e44864576543468e32008.jpg',
+  '475c69ed34ca2e55184c21c160fcd4cb.jpg',
+  '4c2c5746ef6c1f7323dacb4a49f5222e.jpg',
+  '4d01d96117ec2c52deb6e5015428d8b6.jpg',
+  '506af92280be270d36a3b6d1cdf68bb6.jpg',
+  '578acb93e470a8db068a4b87d4b49b10.jpg',
+  '590883b26f231199221ae543534b80cf.jpg',
+  '7fb6e8b514fa0f4da91dc9dec915f5e4.jpg',
+  '9f22ac06921c0aa18247ddd4079af3cd.jpg',
+  'b1d5cbb0831cc1b69056803ff00fd748.jpg',
+  'c272d384b864fbd7a6731bcfdb518dd8.jpg'
+];
+
+const grid = document.getElementById('galleryGrid');
+photos.forEach(p => {
+  const img = document.createElement('img');
+  img.src = photoDir + p;
+  img.alt = '聪聪日常照片';
+  img.loading = 'lazy';
+  img.onclick = () => {
+    document.getElementById('lightboxImg').src = photoDir + p;
+    document.getElementById('lightbox').classList.add('active');
+  };
+  grid.appendChild(img);
+});
+</script>
+
+</body>
+</html>
